@@ -1,0 +1,5 @@
+*.py[co]
+data
+test
+*.tif
+.DS_Store
