@@ -174,7 +174,7 @@ class Scene(object):
 
     @property
     def base_path(self):
-        base_path = '{output_dir}/{scene_id}'.format(
+        return '{output_dir}/{scene_id}'.format(
             output_dir=self.output_dir,
             scene_id=self.scene_id
         )
@@ -238,7 +238,7 @@ class Scene(object):
         run(cmd)
 
     def _convert_to_8bit(self, band):
-        cmd = 'gdal_translate -of "GTiff" -co "COMPRESS=LZW" -scale 0 65535 0 255 -ot Byte {base_path}_#{band}.TIF {base_path}_#{band}_tmp.TIF'.format(
+        cmd = 'gdal_translate -of "GTiff" -co "COMPRESS=LZW" -scale 0 65535 0 255 -ot Byte {base_path}_{band}.TIF {base_path}_{band}_tmp.TIF'.format(
             base_path=self.base_path,
             band=band
         )
@@ -246,7 +246,10 @@ class Scene(object):
         print(cmd)
         run(cmd)
 
-        cmd = 'rm {base_path}_#{band}.TIF && mv {base_path}_#{band}_tmp.TIF {base_path}_#{band}.TIF'
+        cmd = 'rm {base_path}_{band}.TIF && mv {base_path}_{band}_tmp.TIF {base_path}_{band}.TIF'.format(
+            base_path=self.base_path,
+            band=band
+        )
 
         print(cmd)
         run(cmd)
@@ -263,7 +266,7 @@ class Scene(object):
                 self._convert_to_8bit(band)
 
             base_file_path = '{base_path}_{band}'.format(
-                path=self.base_path,
+                base_path=self.base_path,
                 band=band,
             )
             cmd = 'gdalwarp -t_srs "EPSG:3857" {base_file_path}.TIF {base_file_path}-projected.tif'.format(
@@ -361,7 +364,15 @@ class EarthExplorer(object):
         return scene_ids
 
 def main():
-    bounding_box = [6.7, 3, 6.4, 3.7]
+    # NWSE
+    # Lagos
+    # bounding_box = [6.7, 3, 6.4, 3.7]
+
+    # Hong Kong
+    # bounding_box = [22.6, 113.7, 22.1, 114.5]
+
+    # Vegas
+    bounding_box = [36.42311, -115.63218, 35.90424, -114.66538]
 
     start_year = int(sys.argv[1])
     end_year = int(sys.argv[2])
