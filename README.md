@@ -41,3 +41,5 @@ TODO
 * Adjust colors for clear viewing
 * Pansharpen
 * Put scenes in their own folders
+* Use mapbox library for searching USGS http://mapbox.github.io/usgs/reference/api.html
+* Add command line arguments

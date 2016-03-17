@@ -8,6 +8,7 @@ Band usages: http://landsat.usgs.gov//best_spectral_bands_to_use.php
 
 from glob import glob
 import os
+import sys
 
 from invoke import run
 from lxml import etree
@@ -57,9 +58,27 @@ class Satellite(object):
             return ['B4', 'B3', 'B2']
 
     @property
-    def color_infrared_bands(self):
+    def urban_false_color_bands(self):
         """
-        "5-4-3" color infrared for analyzing vegetation.
+        7-6-4 false color for analyzing urban areas.
+
+        http://www.exelisvis.com/Home/NewsUpdates/TabId/170/ArtMID/735/ArticleID/14305/The-Many-Band-Combinations-of-Landsat-8.aspx
+        """
+        if self.version < 4:
+            raise ValueError('Urban false color is not possible for Landsats 1-3 as they did not have short-wave infrared bands.')
+        elif self.version <= 5 and self.sensor == 'T':
+            return ['B70', 'B50', 'B30']
+        elif self.version <= 5:
+            return ['B7', 'B5', 'B3']
+        elif self.version == 7:
+            return ['B70', 'B50', 'B30']
+        else:
+            return ['B7', 'B6', 'B4']
+
+    @property
+    def vegetation_false_color_bands(self):
+        """
+        5-4-3 color infrared for analyzing vegetation.
 
         http://www.exelisvis.com/Home/NewsUpdates/TabId/170/ArtMID/735/ArticleID/14305/The-Many-Band-Combinations-of-Landsat-8.aspx
         """
@@ -73,13 +92,6 @@ class Satellite(object):
             return ['B40', 'B30', 'B20']
         else:
             return ['B5', 'B4', 'B3']
-
-    @property
-    def google_id(self):
-        if self.version > 4:
-            return 'L%s' % self.version
-        else:
-            return 'L%s%i' % (self.sensor_short, self.version)
 
     @classmethod
     def for_year(cls, year):
@@ -106,7 +118,8 @@ class SceneID(str):
     """
     A Landsat scene identifier like: LT41910561988052AAA03.
 
-    Naming convention is defined at: http://landsat.usgs.gov/naming_conventions_scene_identifiers.php
+    Naming convention is defined at:
+    http://landsat.usgs.gov/naming_conventions_scene_identifiers.php
     """
     @property
     def sensor(self):
@@ -118,19 +131,19 @@ class SceneID(str):
 
     @property
     def path(self):
-        return int(self[3:6])
+        return self[3:6]
 
     @property
     def row(self):
-        return int(self[6:9])
+        return self[6:9]
 
     @property
     def year(self):
-        return int(self[9:13])
+        return self[9:13]
 
     @property
     def day(self):
-        return int(self[13:6])
+        return self[13:16]
 
     @property
     def ground_station_id(self):
@@ -140,14 +153,24 @@ class SceneID(str):
     def archive_version(self):
         return self[19:21]
 
+    @property
+    def google_id(self):
+        if self.version > 4:
+            return 'L%s' % self.version
+        else:
+            return 'L%s%i' % (self.sensor, self.version)
+
 
 class Scene(object):
+    """
+    Encasulates the processing for a single scene.
+    """
     def __init__(self, scene_id, output_dir):
         self.scene_id = scene_id
         self.output_dir = output_dir
 
         self.satellite = Satellite(self.scene_id.version)
-        self.bands = self.satellite.natural_color_bands
+        self.bands = self.satellite.urban_false_color_bands
 
     @property
     def zip_exists(self):
@@ -183,12 +206,7 @@ class Scene(object):
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
 
-        url = 'gs://earthengine-public/landsat/{google_id}/{path}/{row}/{id}.tar.bz'.format(
-            google_id=self.satellite.google_id,
-            path=self.scene_id[3:6],
-            row=self.scene_id[6:9],
-            id=self.scene_id,
-        )
+        url = 'gs://earthengine-public/landsat/{id.google_id}/{id.path}/{id.row}/{id}.tar.bz'.format(id=self.scene_id)
 
         cmd = 'gsutil cp %s %s' % (url, self.output_dir)
 
@@ -330,8 +348,8 @@ class EarthExplorer(object):
 def main():
     bounding_box = [6.7, 3, 6.4, 3.7]
 
-    start_year = 1985
-    end_year = 1990
+    start_year = int(sys.argv[1])
+    end_year = int(sys.argv[2])
 
     output_dir = 'data'
 
@@ -343,7 +361,7 @@ def main():
         scene_ids = explorer.get_scenes()
 
         for scene_id in scene_ids:
-            print(scene_id)
+            print('Processing %s' % scene_id)
             scene = Scene(scene_id, year_dir)
 
             scene.download()
