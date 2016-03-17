@@ -35,10 +35,8 @@ TODO
 ----
 
 * Integrate with Schooner-tk to purge cloud cover and balance colors
-* Convert Landsat 8 images to 8-bit
 * Crop to provided bounding box
 * Merge images if city falls along a tile boundary
-* Adjust colors for clear viewing
 * Pansharpen
 * Put scenes in their own folders
 * Use mapbox library for searching USGS http://mapbox.github.io/usgs/reference/api.html
