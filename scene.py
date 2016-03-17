@@ -219,6 +219,20 @@ class Scene(object):
         print(cmd)
         run(cmd)
 
+        cmd = 'listgeo -no_norm {base_path}_RGB-projected.tif > {base_path}.geo'.format(
+            base_path=self.base_path
+        )
+
+        print(cmd)
+        run(cmd)
+
+        cmd = 'geotifcp -g {base_path}.geo {base_path}_RGB-projected-corrected.tif {base_path}_RGB-projected-corrected-geo.tif'.format(
+            base_path=self.base_path
+        )
+
+        print(cmd)
+        run(cmd)
+
     def process(self):
         try:
             self.download()
