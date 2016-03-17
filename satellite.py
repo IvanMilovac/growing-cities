@@ -31,9 +31,7 @@ class Satellite(object):
         """
         if self.version < 4:
             raise ValueError('True color is not possible for Landsats 1-3 as they did not have a blue band.')
-        elif self.version <= 5:
-            return [3, 2, 1]
-        elif self.version == 7:
+        elif self.version < 8:
             return [3, 2, 1]
         else:
             return [4, 3, 2]
@@ -47,9 +45,7 @@ class Satellite(object):
         """
         if self.version < 4:
             raise ValueError('Urban false color is not possible for Landsats 1-3 as they did not have short-wave infrared bands.')
-        elif self.version <= 5:
-            return [7, 5, 3]
-        elif self.version == 7:
+        elif self.version < 8:
             return [7, 5, 3]
         else:
             return [7, 6, 4]
@@ -63,11 +59,7 @@ class Satellite(object):
         """
         if self.version < 4:
             return [6, 5, 4]
-        elif self.version <= 5 and self.sensor == 'T':
-            return [4, 3, 2]
-        elif self.version <= 5:
-            return [4, 2, 1]
-        elif self.version == 7:
+        elif self.version < 8:
             return [4, 3, 2]
         else:
             return [5, 4, 3]
