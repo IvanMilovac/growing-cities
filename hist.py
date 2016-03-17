@@ -173,6 +173,13 @@ class Scene(object):
         self.bands = self.satellite.urban_false_color_bands
 
     @property
+    def base_path(self):
+        base_path = '{output_dir}/{scene_id}'.format(
+            output_dir=self.output_dir,
+            scene_id=self.scene_id
+        )
+
+    @property
     def zip_exists(self):
         tar_path = os.path.join(self.output_dir, '%s.tar.bz' % self.scene_id)
 
@@ -230,6 +237,20 @@ class Scene(object):
         print(cmd)
         run(cmd)
 
+    def _convert_to_8bit(self, band):
+        cmd = 'gdal_translate -of "GTiff" -co "COMPRESS=LZW" -scale 0 65535 0 255 -ot Byte {base_path}_#{band}.TIF {base_path}_#{band}_tmp.TIF'.format(
+            base_path=self.base_path,
+            band=band
+        )
+
+        print(cmd)
+        run(cmd)
+
+        cmd = 'rm {base_path}_#{band}.TIF && mv {base_path}_#{band}_tmp.TIF {base_path}_#{band}.TIF'
+
+        print(cmd)
+        run(cmd)
+
     def project_bands(self):
         if not self.band_files_exist:
             raise IOError('Band files do not exist!')
@@ -239,16 +260,14 @@ class Scene(object):
 
         for band in self.bands:
             if self.satellite.version > 7:
-                # TKTK: Convert to 8 bit
-                pass
+                self._convert_to_8bit(band)
 
-            base_path = '{output_dir}/{scene_id}_{band}'.format(
-                output_dir=self.output_dir,
-                scene_id=self.scene_id,
+            base_file_path = '{base_path}_{band}'.format(
+                path=self.base_path,
                 band=band,
             )
-            cmd = 'gdalwarp -t_srs "EPSG:3857" {base_path}.TIF {base_path}-projected.tif'.format(
-                base_path=base_path
+            cmd = 'gdalwarp -t_srs "EPSG:3857" {base_file_path}.TIF {base_file_path}-projected.tif'.format(
+                base_file_path=base_file_path
             )
 
             print(cmd)
@@ -261,14 +280,10 @@ class Scene(object):
         if self.merged_file_exists:
             return
 
-        base_path = '{output_dir}/{scene_id}'.format(
-            output_dir=self.output_dir,
-            scene_id=self.scene_id
-        )
         bands = ','.join(self.bands)
 
         cmd = 'gdal_merge.py -separate {base_path}_{{{bands}}}-projected.tif -o {base_path}_RGB-projected.tif'.format(
-            base_path=base_path,
+            base_path=self.base_path,
             bands=bands
         )
 
