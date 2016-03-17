@@ -3,7 +3,8 @@ growing-cities
 
 Based on Ruby code written by ProPublica for their [Las Vegas Growth Map](https://projects.propublica.org/las-vegas-growth-map/).
 
-Setup, roughly:
+Setup
+-----
 
 ```
 mkvirtualenv growing-cities
@@ -29,3 +30,13 @@ mkdir data
 
 python hist.py
 ```
+
+TODO
+----
+
+* Integrate with Schooner-tk to purge cloud cover and balance colors
+* Convert Landsat 8 images to 8-bit
+* Crop to provided bounding box
+* Merge images if city falls along a tile boundary
+* Adjust colors for clear viewing
+* Pansharpen
