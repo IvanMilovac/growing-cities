@@ -40,3 +40,4 @@ TODO
 * Merge images if city falls along a tile boundary
 * Adjust colors for clear viewing
 * Pansharpen
+* Put scenes in their own folders
