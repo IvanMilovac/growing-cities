@@ -7,7 +7,7 @@ Setup, roughly:
 
 ```
 mkvirtualenv growing-cities
-pip install requests cssselect lxml
+pip install requests lxml cssselect invoke
 
 gem install net
 gem install nokogiri
