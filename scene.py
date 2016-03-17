@@ -65,7 +65,15 @@ class Scene(object):
         self.output_dir = output_dir
 
         self.satellite = Satellite(self.scene_id.version)
-        self.bands = self.satellite.natural_color_bands
+
+    @property
+    def bands(self):
+        long_name = '{base_path}_B10.TIF'.format(base_path=self.base_path)
+
+        if os.path.exists(long_name):
+            return ['B%i0' % b for b in self.satellite.natural_color_bands]
+        else:
+            return ['B%i' % b for b in self.satellite.natural_color_bands]
 
     @property
     def base_path(self):

@@ -31,14 +31,12 @@ class Satellite(object):
         """
         if self.version < 4:
             raise ValueError('True color is not possible for Landsats 1-3 as they did not have a blue band.')
-        elif self.version <= 5 and self.sensor == 'T':
-            return ['B30', 'B20', 'B10']
         elif self.version <= 5:
-            return ['B3', 'B2', 'B1']
+            return [3, 2, 1]
         elif self.version == 7:
-            return ['B3', 'B2', 'B1']
+            return [3, 2, 1]
         else:
-            return ['B4', 'B3', 'B2']
+            return [4, 3, 2]
 
     @property
     def urban_false_color_bands(self):
@@ -49,14 +47,12 @@ class Satellite(object):
         """
         if self.version < 4:
             raise ValueError('Urban false color is not possible for Landsats 1-3 as they did not have short-wave infrared bands.')
-        elif self.version <= 5 and self.sensor == 'T':
-            return ['B70', 'B50', 'B30']
         elif self.version <= 5:
-            return ['B7', 'B5', 'B3']
+            return [7, 5, 3]
         elif self.version == 7:
-            return ['B7', 'B5', 'B3']
+            return [7, 5, 3]
         else:
-            return ['B7', 'B6', 'B4']
+            return [7, 6, 4]
 
     @property
     def vegetation_false_color_bands(self):
@@ -66,15 +62,15 @@ class Satellite(object):
         http://www.exelisvis.com/Home/NewsUpdates/TabId/170/ArtMID/735/ArticleID/14305/The-Many-Band-Combinations-of-Landsat-8.aspx
         """
         if self.version < 4:
-            return ['B6', 'B5', 'B4']
+            return [6, 5, 4]
         elif self.version <= 5 and self.sensor == 'T':
-            return ['B40', 'B30', 'B20']
+            return [4, 3, 2]
         elif self.version <= 5:
-            return ['B4', 'B2', 'B1']
+            return [4, 2, 1]
         elif self.version == 7:
-            return ['B4', 'B3', 'B2']
+            return [4, 3, 2]
         else:
-            return ['B5', 'B4', 'B3']
+            return [5, 4, 3]
 
     @classmethod
     def for_year(cls, year):
