@@ -6,6 +6,7 @@ Spectral band definitions: http://landsat.usgs.gov//band_designations_landsat_sa
 Band usages: http://landsat.usgs.gov//best_spectral_bands_to_use.php
 """
 
+import yaml
 import os
 import sys
 
@@ -14,30 +15,23 @@ from scene import Scene
 
 
 def main():
-    # NWSE
-    # Lagos
-    # bounding_box = [6.7, 3, 6.4, 3.7]
-
-    # Hong Kong
-    # bounding_box = [22.6, 113.7, 22.1, 114.5]
-
-    # Vegas
-    # bounding_box = [36.42311, -115.63218, 35.90424, -114.66538]
-
-    # Kangbashi New Area
-    # 39.603704, 109.782772
-    bounding_box = [39.6, 109.6, 39.5, 110]
-
-    start_year = int(sys.argv[1])
-    end_year = int(sys.argv[2])
-
     output_dir = 'data'
 
-    for year in range(start_year, end_year + 1):
+    with open(sys.argv[1]) as f:
+        config = yaml.load(f)
+
+    bounding_box = [
+        config['north'],
+        config['west'],
+        config['south'],
+        config['east']
+    ]
+
+    for year in range(config['start_year'], config['end_year'] + 1):
         print(year)
         year_dir = os.path.join(output_dir, str(year))
 
-        explorer = EarthExplorer(year, bounding_box)
+        explorer = EarthExplorer(year, bounding_box, max_cloud_cover=config['max_cloud_cover'])
         scene_ids = explorer.get_scenes()
 
         for scene_id in scene_ids[:1]:

@@ -6,9 +6,11 @@ Based on Ruby code written by ProPublica for their [Las Vegas Growth Map](https:
 Setup
 -----
 
+Requires Python 2.7.
+
 ```
 mkvirtualenv growing-cities
-pip install requests lxml cssselect invoke
+pip install requests lxml cssselect invoke pyyaml
 
 gem install net
 gem install nokogiri

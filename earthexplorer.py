@@ -4,16 +4,15 @@ from lxml import etree
 from lxml.cssselect import CSSSelector
 import requests
 
-CLOUD_COVER_LIMIT = 1
-
 
 class EarthExplorer(object):
     """
     Search USGS EarthExplorer for scene identifiers.
     """
-    def __init__(self, year, bounding_box):
+    def __init__(self, year, bounding_box, max_cloud_cover=0):
         self.year = year
         self.bounding_box = bounding_box
+        self.max_cloud_cover = max_cloud_cover
 
     def _get_dataset_name(self):
         """
@@ -64,7 +63,7 @@ class EarthExplorer(object):
 
             value = float(cloud_cover_el.text)
 
-            if value > CLOUD_COVER_LIMIT:
+            if value > self.max_cloud_cover:
                 print('Skipping %s, %.0f%% cloud cover' % (scene_id, value))
                 return False
 
