@@ -5,6 +5,9 @@ import os
 
 from invoke import run
 from invoke.exceptions import Failure
+import numpy as np
+import rasterio
+from skimage import exposure, img_as_ubyte
 
 from satellite import Satellite
 
@@ -212,52 +215,74 @@ class Scene(object):
         print(cmd)
         run(cmd)
 
-    def color_correct(self):
+    def crop(self):
         if not self.merged_file_exists:
             raise IOError('Merged file does not exist')
-
-        if self.color_corrected_file_exists:
-            return
-
-        # Beautiful leveling for 1985 Las Vegas
-        # convert -channel R -level 8%,46% -channel G -level 11%,37% -channel B -level 28%,61% LT50390351985250XXX04_RGB-projected.tif LT50390351985250XXX04_RGB-projected-corrected.tif
-
-        cmd = 'convert {levels} {output_dir}/merged.tif {output_dir}/temp.tif'.format(
-            levels=self.levels,
-            output_dir=self.output_dir
-        )
-
-        print(cmd)
-        run(cmd)
-
-        cmd = 'listgeo -no_norm {output_dir}/merged.tif > {output_dir}/merged.geo'.format(
-            output_dir=self.output_dir
-        )
-
-        print(cmd)
-        run(cmd)
-
-        cmd = 'geotifcp -g {output_dir}/merged.geo {output_dir}/temp.tif {output_dir}/color_corrected.tif'.format(
-            output_dir=self.output_dir
-        )
-
-        print(cmd)
-        run(cmd)
-
-    def crop(self):
-        if not self.color_corrected_file_exists:
-            raise IOError('Color corrected file does not exist')
 
         if self.crop_file_exists:
             return
 
-        cmd = 'gdalwarp -cutline {cutline} -crop_to_cutline {output_dir}/color_corrected.tif {output_dir}/crop.tif'.format(
+        cmd = 'gdalwarp -cutline {cutline} -crop_to_cutline {output_dir}/merged.tif {output_dir}/crop.tif'.format(
             cutline=self.cutline,
             output_dir=self.output_dir
         )
 
         print(cmd)
         run(cmd)
+
+    def color_correct(self):
+        if not self.crop_file_exists:
+            raise IOError('Crop file does not exist')
+
+        if self.color_corrected_file_exists:
+            return
+
+        print('Equalizing histograms')
+
+        from skimage.color.adapt_rgb import adapt_rgb, each_channel
+
+        @adapt_rgb(each_channel)
+        def correct(image):
+            image = exposure.adjust_gamma(image, 1.25)
+            # p2, p98 = np.percentile(rolled, (2, 99))
+            return
+
+        with rasterio.drivers():
+            with rasterio.open('%s/crop.tif' % self.output_dir) as f:
+                data = f.read()
+                profile = f.profile
+
+            rolled = np.rollaxis(np.rollaxis(data, 1), 2, 1)
+
+            new_bands = []
+
+            for b, band in enumerate(rolled.T):
+                # R
+                if b == 0:
+                    in_range = (28, 130)
+                # G
+                elif b == 1:
+                    in_range = (41, 105)
+                # B
+                elif b == 2:
+                    in_range = (58, 120)
+
+                new_bands.append(
+                    exposure.rescale_intensity(band, in_range=in_range)
+                )
+
+            rescaled = np.array(new_bands).T
+
+            # rolled = exposure.adjust_gamma(rolled, 1.25)
+            # rescaled = exposure.rescale_intensity(rolled, in_range=(p2, p98))
+            # rescaled = img_as_ubyte(exposure.equalize_adapthist(rolled))
+            # rescaled = correct(rolled)
+            # rescaled = img_as_ubyte(exposure.adjust_sigmoid(rolled, 0.25, 10))
+
+            unrolled = np.rollaxis(rescaled, 2)
+
+            with rasterio.open('%s/color_corrected.tif' % self.output_dir, 'w', **profile) as f:
+                f.write(unrolled)
 
     def process(self):
         print('{s.year} {s.day} {s.path} {s.row}'.format(s=self.scene_id))
@@ -267,7 +292,7 @@ class Scene(object):
             self.unzip()
             self.project_bands()
             self.merge_bands()
-            self.color_correct()
             self.crop()
+            self.color_correct()
         except Failure as e:
             print(str(e))

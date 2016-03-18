@@ -19,12 +19,12 @@ from scene import Scene
 
 
 def merge_adjacent(path_dir):
+    print('Merging adjacent images')
+
     output_path = '%s/merged.tif' % path_dir
 
     with rasterio.drivers():
-        files = glob('%s/**/**/crop.tif' % path_dir)
-
-        print(files)
+        files = glob('%s/**/**/color_corrected.tif' % path_dir)
 
         sources = [rasterio.open(f) for f in files]
         dest, output_transform = merge(sources)
@@ -68,7 +68,10 @@ def main():
                     scene = Scene(scene_id, scene_dir, config['levels'], config['cutline'])
                     scene.process()
 
-            merge_adjacent(path_dir)
+            files = glob('%s/**/**/color_corrected.tif' % path_dir)
+
+            if len(files) > 0:
+                merge_adjacent(path_dir)
 
 
 if __name__ == '__main__':

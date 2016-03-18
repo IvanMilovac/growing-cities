@@ -10,7 +10,7 @@ Requires Python 2.7 and GDAL.
 
 ```
 mkvirtualenv growing-cities
-pip install requests lxml cssselect invoke pyyaml rasterio
+pip install requests lxml cssselect invoke pyyaml rasterio scikit-image
 
 gem install net
 gem install nokogiri
@@ -39,3 +39,4 @@ TODO
 * Purge cloud cover
 * Balance colors
 * Pansharpen Landsat 8 images
+* Skip nighttime images
