@@ -60,9 +60,11 @@ class Scene(object):
     """
     Encasulates the processing for a single scene.
     """
-    def __init__(self, scene_id, output_dir):
+    def __init__(self, scene_id, output_dir, levels, cutline):
         self.scene_id = SceneID(scene_id)
         self.output_dir = output_dir
+        self.levels = levels
+        self.cutline = cutline
 
         self.satellite = Satellite(self.scene_id.version)
 
@@ -90,27 +92,33 @@ class Scene(object):
 
     @property
     def band_files_exist(self):
-        band_files = glob('%s/%s_B*' % (self.output_dir, self.scene_id))
+        band_files = glob('%s/*_B*' % self.output_dir)
 
         return len(band_files) >= len(self.bands)
 
     @property
     def projected_files_exist(self):
-        projected_files = glob('%s/%s*-projected.tif' % (self.output_dir, self.scene_id))
+        projected_files = glob('%s/*-projected.tif' % self.output_dir)
 
         return len(projected_files) >= len(self.bands)
 
     @property
     def merged_file_exists(self):
-        merged_file = '%s/%s_RGB-projected.tif' % (self.output_dir, self.scene_id)
+        merged_file = '%s/merged.tif' % self.output_dir
 
         return os.path.exists(merged_file)
 
     @property
     def color_corrected_file_exists(self):
-        color_corrected_file = '%s/%s_RGB-projected-corrected.tif' % (self.output_dir, self.scene_id)
+        color_corrected_file = '%s/color_corrected.tif' % self.output_dir
 
         return os.path.exists(color_corrected_file)
+
+    @property
+    def crop_file_exists(self):
+        crop_file = '%s/crop.tif' % self.output_dir
+
+        return os.path.exists(crop_file)
 
     def download(self):
         """
@@ -179,7 +187,8 @@ class Scene(object):
                 band=band,
             )
             cmd = 'gdalwarp -t_srs "EPSG:3857" {base_file_path}.TIF {base_file_path}-projected.tif'.format(
-                base_file_path=base_file_path
+                base_file_path=base_file_path,
+                cutline=self.cutline
             )
 
             print(cmd)
@@ -194,9 +203,10 @@ class Scene(object):
 
         bands = ','.join(self.bands)
 
-        cmd = 'gdal_merge.py -separate {base_path}_{{{bands}}}-projected.tif -o {base_path}_RGB-projected.tif'.format(
+        cmd = 'rio stack {base_path}_{{{bands}}}-projected.tif -o {output_dir}/merged.tif'.format(
             base_path=self.base_path,
-            bands=bands
+            bands=bands,
+            output_dir=self.output_dir
         )
 
         print(cmd)
@@ -212,33 +222,52 @@ class Scene(object):
         # Beautiful leveling for 1985 Las Vegas
         # convert -channel R -level 8%,46% -channel G -level 11%,37% -channel B -level 28%,61% LT50390351985250XXX04_RGB-projected.tif LT50390351985250XXX04_RGB-projected-corrected.tif
 
-        cmd = 'convert -channel R -level 8%,46% -channel G -level 11%,37% -channel B -level 28%,61% {base_path}_RGB-projected.tif {base_path}_RGB-projected-corrected.tif'.format(
-            base_path=self.base_path
+        cmd = 'convert {levels} {output_dir}/merged.tif {output_dir}/temp.tif'.format(
+            levels=self.levels,
+            output_dir=self.output_dir
         )
 
         print(cmd)
         run(cmd)
 
-        cmd = 'listgeo -no_norm {base_path}_RGB-projected.tif > {base_path}.geo'.format(
-            base_path=self.base_path
+        cmd = 'listgeo -no_norm {output_dir}/merged.tif > {output_dir}/merged.geo'.format(
+            output_dir=self.output_dir
         )
 
         print(cmd)
         run(cmd)
 
-        cmd = 'geotifcp -g {base_path}.geo {base_path}_RGB-projected-corrected.tif {base_path}_RGB-projected-corrected-geo.tif'.format(
-            base_path=self.base_path
+        cmd = 'geotifcp -g {output_dir}/merged.geo {output_dir}/temp.tif {output_dir}/color_corrected.tif'.format(
+            output_dir=self.output_dir
+        )
+
+        print(cmd)
+        run(cmd)
+
+    def crop(self):
+        if not self.color_corrected_file_exists:
+            raise IOError('Color corrected file does not exist')
+
+        if self.crop_file_exists:
+            return
+
+        cmd = 'gdalwarp -cutline {cutline} -crop_to_cutline {output_dir}/color_corrected.tif {output_dir}/crop.tif'.format(
+            cutline=self.cutline,
+            output_dir=self.output_dir
         )
 
         print(cmd)
         run(cmd)
 
     def process(self):
+        print('{s.year} {s.day} {s.path} {s.row}'.format(s=self.scene_id))
+
         try:
             self.download()
             self.unzip()
             self.project_bands()
             self.merge_bands()
             self.color_correct()
+            self.crop()
         except Failure as e:
             print(str(e))

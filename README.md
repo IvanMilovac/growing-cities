@@ -6,11 +6,11 @@ Based on Ruby code written by ProPublica for their [Las Vegas Growth Map](https:
 Setup
 -----
 
-Requires Python 2.7.
+Requires Python 2.7 and GDAL.
 
 ```
 mkvirtualenv growing-cities
-pip install requests lxml cssselect invoke pyyaml
+pip install requests lxml cssselect invoke pyyaml rasterio
 
 gem install net
 gem install nokogiri
@@ -30,13 +30,12 @@ brew install gnu-tar --with-default-names
 
 mkdir data
 
-python hist.py
+python main.py tyler.yml
 ```
 
 TODO
 ----
 
-* Integrate with Schooner-tk to purge cloud cover and balance colors
-* Crop to provided bounding box
-* Merge images if city falls along a tile boundary
-* Pansharpen
+* Purge cloud cover
+* Balance colors
+* Pansharpen Landsat 8 images

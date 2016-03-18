@@ -1,4 +1,4 @@
 #!/bin/bash
 
-rm data/**/**/*_RGB-projected.tif
+rm data/**/**/**/**/merged.tif
 ./clean_corrected.sh

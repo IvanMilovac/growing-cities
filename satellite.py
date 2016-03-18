@@ -77,9 +77,11 @@ class Satellite(object):
             return cls(5)
         elif year >= 1982:
             return cls(4)
-        elif year >= 1978:
-            return cls(3)
-        elif year >= 1975:
-            return cls(2)
+        # elif year >= 1978:
+        #     return cls(3)
+        # elif year >= 1975:
+        #     return cls(2)
+        # else:
+        #     return cls(1)
         else:
-            return cls(1)
+            raise ValueError('Only years starting in 1982 are allowed (due to change in WVS coordinates).')

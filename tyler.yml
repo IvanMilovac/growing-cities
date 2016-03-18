@@ -1,0 +1,9 @@
+path_start: 26
+path_end: 26
+row_start: 37
+row_end: 38
+start_year: 2000
+end_year: 2010
+max_cloud_cover: 0
+levels: -channel R -level 12%,41% -channel G -level 16%,34% -channel B -level 24%,37%
+cutline: tyler.geojson

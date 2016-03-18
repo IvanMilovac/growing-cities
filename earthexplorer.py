@@ -9,9 +9,10 @@ class EarthExplorer(object):
     """
     Search USGS EarthExplorer for scene identifiers.
     """
-    def __init__(self, year, bounding_box, max_cloud_cover=0):
+    def __init__(self, year, path, row, max_cloud_cover=0):
         self.year = year
-        self.bounding_box = bounding_box
+        self.path = path
+        self.row = row
         self.max_cloud_cover = max_cloud_cover
 
     def _get_dataset_name(self):
@@ -41,8 +42,9 @@ class EarthExplorer(object):
         Fetch a scene list from the EarthExplorer API. Individual scenes are
         parsed and returned as :class:`.SceneID` instances.
         """
-        url = 'http://earthexplorer.usgs.gov/EE/InventoryStream/latlong?north={bb[0]}&south={bb[2]}&east={bb[3]}&west={bb[1]}&sensor={sensor}&start_date={year}-01-01&end_date={year}-12-31'.format(
-            bb=self.bounding_box,
+        url = 'http://earthexplorer.usgs.gov/EE/InventoryStream/pathrow?start_path={path}&end_path={path}&start_row={row}&end_row={row}&sensor={sensor}&start_date={year}-01-01&end_date={year}-12-31'.format(
+            path=self.path,
+            row=self.row,
             sensor=self._get_dataset_name(),
             year=self.year
         )

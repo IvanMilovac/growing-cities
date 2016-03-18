@@ -1,3 +1,4 @@
 #!/bin/bash
 
-rm data/**/**/*_RGB-projected-corrected.tif
+rm data/**/**/**/**/temp.tif
+rm data/**/**/**/**/color_corrected.tif
